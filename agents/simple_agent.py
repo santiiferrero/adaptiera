@@ -142,9 +142,9 @@ Por favor, proporciona más detalles sobre: {self.state.current_question}""")
         if not groq_api_key:
             print("⚠️ GROQ_API_KEY no configurada, usando lógica simple")
             print(f"   Variables de entorno disponibles: {list(os.environ.keys())[:5]}...")
-            # Lógica simple sin LLM
-            is_satisfactory = len(user_response.strip()) > 10
-            clarification_reason = "La respuesta es muy corta, por favor proporciona más detalles." if not is_satisfactory else ""
+            # Lógica simple sin LLM (más permisiva)
+            is_satisfactory = len(user_response.strip()) > 3  # Reducido de 10 a 3 caracteres
+            clarification_reason = "Por favor, proporciona una respuesta más detallada." if not is_satisfactory else ""
             return is_satisfactory, clarification_reason
         
         print(f"✅ GROQ_API_KEY encontrada, usando evaluación inteligente")
@@ -160,10 +160,12 @@ Por favor, proporciona más detalles sobre: {self.state.current_question}""")
             Respuesta: {user_response}
             
             Responde SOLO con:
-            - "SATISFACTORIA" si la respuesta es completa y relevante
-            - "NECESITA_CLARIFICACION: [razón específica]" si necesita más información
+            - "SATISFACTORIA" si la respuesta proporciona información básica relevante a la pregunta
+            - "NECESITA_CLARIFICACION: [razón específica]" si la respuesta está completamente vacía, es irrelevante o muy confusa
             
-            Sé estricto pero justo en tu evaluación.
+            Sé PERMISIVO en tu evaluación. Acepta respuestas que tengan al menos alguna relación con la pregunta, 
+            incluso si son breves o no muy detalladas. Solo solicita clarificación si la respuesta realmente 
+            no tiene sentido o está completamente fuera de tema.
             """
             
             evaluation = llm.invoke(evaluation_prompt).content.strip()
@@ -176,9 +178,9 @@ Por favor, proporciona más detalles sobre: {self.state.current_question}""")
                 
         except Exception as e:
             print(f"Error al evaluar con Groq: {e}")
-            # Fallback a lógica simple
-            is_satisfactory = len(user_response.strip()) > 10
-            clarification_reason = "La respuesta es muy corta, por favor proporciona más detalles." if not is_satisfactory else ""
+            # Fallback a lógica simple (más permisiva)
+            is_satisfactory = len(user_response.strip()) > 3
+            clarification_reason = "Por favor, proporciona una respuesta más detallada." if not is_satisfactory else ""
             return is_satisfactory, clarification_reason
     
     def _next_question(self) -> str:

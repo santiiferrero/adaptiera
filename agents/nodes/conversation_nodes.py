@@ -61,9 +61,9 @@ def process_user_response_node(state: ConversationState) -> ConversationState:
     groq_api_key = os.getenv("GROQ_API_KEY")
     if not groq_api_key:
         print("⚠️ GROQ_API_KEY no configurada, usando lógica simple")
-        # Lógica simple sin LLM
-        is_satisfactory = len(user_response.strip()) > 10
-        clarification_reason = "La respuesta es muy corta" if not is_satisfactory else None
+        # Lógica simple sin LLM (más permisiva)
+        is_satisfactory = len(user_response.strip()) > 3
+        clarification_reason = "Por favor, proporciona una respuesta más detallada" if not is_satisfactory else None
     else:
         # Usar Groq para evaluar la respuesta (modelo actualizado)
         llm = ChatGroq(api_key=groq_api_key, model="llama-3.3-70b-versatile")
@@ -75,10 +75,12 @@ def process_user_response_node(state: ConversationState) -> ConversationState:
         Respuesta: {user_response}
         
         Responde SOLO con:
-        - "SATISFACTORIA" si la respuesta es completa y relevante
-        - "NECESITA_CLARIFICACION: [razón]" si necesita más información
+        - "SATISFACTORIA" si la respuesta proporciona información básica relevante a la pregunta
+        - "NECESITA_CLARIFICACION: [razón]" si la respuesta está completamente vacía, es irrelevante o muy confusa
         
-        Sé estricto pero justo en tu evaluación.
+        Sé PERMISIVO en tu evaluación. Acepta respuestas que tengan al menos alguna relación con la pregunta, 
+        incluso si son breves o no muy detalladas. Solo solicita clarificación si la respuesta realmente 
+        no tiene sentido o está completamente fuera de tema.
         """
         
         try:
@@ -92,9 +94,9 @@ def process_user_response_node(state: ConversationState) -> ConversationState:
                 clarification_reason = evaluation.replace("NECESITA_CLARIFICACION:", "").strip()
         except Exception as e:
             print(f"Error al evaluar con Groq: {e}")
-            # Fallback a lógica simple
-            is_satisfactory = len(user_response.strip()) > 10
-            clarification_reason = "La respuesta es muy corta" if not is_satisfactory else None
+            # Fallback a lógica simple (más permisiva)
+            is_satisfactory = len(user_response.strip()) > 3
+            clarification_reason = "Por favor, proporciona una respuesta más detallada" if not is_satisfactory else None
     
     # Actualizar estado
     if is_satisfactory:
