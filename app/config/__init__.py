@@ -1,0 +1,1 @@
+# Configuración del módulo config para la aplicación de RRHH 

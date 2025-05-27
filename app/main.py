@@ -67,3 +67,4 @@ elif opcion == "Chatbot":
 # Pie de página
 st.markdown("---")
 st.markdown("© 2025 Adaptiera. Todos los derechos reservados.")
+
