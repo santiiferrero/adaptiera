@@ -5,4 +5,4 @@ st.title("Portal Principal")
 
 formulario.mostrar_formulario()
 st.markdown("---")
-chatbot.lanzar_chatbot()
+#chatbot.lanzar_chatbot()
