@@ -1,5 +1,5 @@
 import streamlit as st
-from services.gmail import enviar_email
+from services.email_sender import enviar_correo
 
 def mostrar_formulario():
     st.subheader("Formulario de contacto")
@@ -8,5 +8,5 @@ def mostrar_formulario():
     mensaje = st.text_area("Mensaje")
 
     if st.button("Enviar"):
-        enviar_email(nombre, email, mensaje)
+        enviar_correo(destinatario=email, asunto=f"Mensaje de {nombre}", cuerpo=mensaje)
         st.success("Correo enviado correctamente.")
