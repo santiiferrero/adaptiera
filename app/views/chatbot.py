@@ -271,30 +271,14 @@ def lanzar_chatbot():
             st.markdown(HELP_CONFIG["tips"])
 
 
-def mostrar_estadisticas_rrhh():
-    """
-    Muestra estadísticas básicas del agente de RRHH (opcional)
-    """
-    if st.session_state.get("rrhh_conversation_started", False):
-        summary = st.session_state.rrhh_agent.get_conversation_summary()
-        
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.metric(
-                METRICS_CONFIG["questions_label"], 
-                summary.get('questions_asked', 0)
-            )
-        
-        with col2:
-            st.metric(
-                METRICS_CONFIG["total_label"], 
-                summary.get('total_questions', 0)
-            )
-        
-        with col3:
-            progress = summary.get('questions_asked', 0) / max(summary.get('total_questions', 1), 1)
-            st.metric(
-                METRICS_CONFIG["progress_label"], 
-                f"{int(progress * 100)}%"
-            ) 
+
+if __name__ == "__main__":
+    # Configuración de la página para deployment independiente
+    st.set_page_config(
+        page_title="Adaptiera - Chatbot RRHH",
+        page_icon="🤖",
+        layout="wide"
+    )
+    
+    # Ejecutar el chatbot directamente
+    lanzar_chatbot()
