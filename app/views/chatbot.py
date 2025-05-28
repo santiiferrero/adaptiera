@@ -10,8 +10,8 @@ from cryptography.fernet import Fernet
 root_dir = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(root_dir))
 
-from agents import crear_agente
-#from agents import crear_agente_langgraph
+from agents.agent import crear_agente
+#from agents.agent import crear_agente_langgraph
 from core.rrhh_config import (
     INTERFACE_CONFIG, 
     BUTTONS_CONFIG, 

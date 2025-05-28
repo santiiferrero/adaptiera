@@ -17,7 +17,7 @@ def test_imports():
     
     try:
         # Probar importación del agente
-        from agents import crear_agente
+        from agents.agent import crear_agente
         print("✅ Agente importado correctamente")
         
         # Probar importación de configuración
@@ -50,7 +50,7 @@ def test_agent_creation():
     print("\n🧪 Probando creación del agente...")
     
     try:
-        from agents import crear_agente
+        from agents.agent import crear_agente
         
         # Crear agente
         agent = crear_agente()

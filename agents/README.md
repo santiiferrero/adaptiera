@@ -31,7 +31,7 @@ El agente está construido con los siguientes componentes:
 ## 🚀 Uso Básico
 
 ```python
-from agents import create_rrhh_agent
+from agents.langgraph_agent import create_rrhh_agent
 
 # Crear el agente
 agent = create_rrhh_agent()
