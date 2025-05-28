@@ -11,7 +11,8 @@ root_dir = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(root_dir))
 
 from agents import crear_agente
-from app.config.rrhh_config import (
+#from agents import crear_agente_langgraph
+from core.rrhh_config import (
     INTERFACE_CONFIG, 
     BUTTONS_CONFIG, 
     HELP_CONFIG, 
@@ -93,6 +94,7 @@ def lanzar_chatbot():
     # Inicializar el agente en session state si no existe
     if "rrhh_agent" not in st.session_state:
         st.session_state.rrhh_agent = crear_agente()
+        #st.session_state.rrhh_agent = crear_agente_langgraph()
         st.session_state.rrhh_conversation_started = False
         st.session_state.rrhh_messages = []
         # Almacenar información del usuario en session state
@@ -110,6 +112,7 @@ def lanzar_chatbot():
         ):
             # Reiniciar el agente
             st.session_state.rrhh_agent = crear_agente()
+            #st.session_state.rrhh_agent = crear_agente_langgraph()
             st.session_state.rrhh_conversation_started = True
             st.session_state.rrhh_messages = []
             
@@ -127,6 +130,7 @@ def lanzar_chatbot():
             type=BUTTONS_CONFIG["restart"]["type"]
         ):
             st.session_state.rrhh_agent = crear_agente()
+            #st.session_state.rrhh_agent = crear_agente_langgraph()
             st.session_state.rrhh_conversation_started = False
             st.session_state.rrhh_messages = []
             st.rerun()
@@ -232,9 +236,28 @@ def lanzar_chatbot():
                             
                             st.rerun()
                             
+                        except ValueError as ve:
+                            # Error de configuración (ej: GROQ_API_KEY faltante)
+                            st.error("🔧 **Error de Configuración**")
+                            st.error(str(ve))
+                            st.warning("⚠️ **Acción requerida:** Contacta al administrador del sistema para configurar las credenciales necesarias.")
+                            
+                        except RuntimeError as re:
+                            # Error de Groq (ej: problemas de conexión, API)
+                            st.error("🌐 **Error de Conexión con IA**")
+                            with st.expander("Ver detalles del error"):
+                                st.error(str(re))
+                            st.warning("🔄 **Sugerencia:** Intenta enviar tu respuesta nuevamente en unos segundos.")
+                            
                         except Exception as e:
-                            st.error(f"{INTERFACE_CONFIG['error_message']}: {str(e)}")
-                            st.error("Por favor, intenta de nuevo o reinicia la conversación.")
+                            # Otros errores inesperados
+                            st.error("❌ **Error Inesperado**")
+                            st.error(f"Tipo: {type(e).__name__}")
+                            st.error(f"Detalles: {str(e)}")
+                            st.warning("🔄 **Opciones:**")
+                            st.warning("1. Intenta enviar tu respuesta nuevamente")
+                            st.warning("2. Usa el botón 'Reiniciar' para comenzar de nuevo")
+                            st.warning("3. Contacta al soporte técnico si el problema persiste")
                     else:
                         st.warning("Por favor, escribe una respuesta antes de enviar.")
     

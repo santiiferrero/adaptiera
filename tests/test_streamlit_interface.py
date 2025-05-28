@@ -21,7 +21,7 @@ def test_imports():
         print("✅ Agente importado correctamente")
         
         # Probar importación de configuración
-        from app.config.rrhh_config import (
+        from core.rrhh_config import (
             INTERFACE_CONFIG, 
             BUTTONS_CONFIG, 
             HELP_CONFIG, 
@@ -76,7 +76,7 @@ def test_configuration():
     print("\n🧪 Probando configuración...")
     
     try:
-        from app.config.rrhh_config import (
+        from core.rrhh_config import (
             INTERFACE_CONFIG, 
             BUTTONS_CONFIG, 
             HELP_CONFIG, 

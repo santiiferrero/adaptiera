@@ -8,16 +8,11 @@ google-auth-httplib2
 google-api-python-client
 twilio
 cryptography
-dotenv
+python-dotenv
 
-###Santi
+###Santi - Solo dependencias esenciales para Groq (sin conflictos)
 
-langgraph
-langchain
-langchain-core
-langchain-community
 langchain-groq
-langgraph-sdk
-requests
-pydantic
+langchain-core
+langchain
 python-dotenv

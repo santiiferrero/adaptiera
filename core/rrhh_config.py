@@ -2,14 +2,17 @@
 
 # Configuración de la interfaz
 INTERFACE_CONFIG = {
-    "title": "🤖 Agente de RRHH - Entrevista Virtual",
-    "subtitle": "Entrevista automatizada con inteligencia artificial",
+    "title": "🤖 Agente de RRHH - Entrevista Virtual con IA",
+    "subtitle": "Entrevista automatizada con inteligencia artificial avanzada",
     "welcome_message": """
     ¡Bienvenido a nuestra entrevista virtual! Soy el asistente de RRHH de Adaptiera.
     Te haré algunas preguntas para conocerte mejor. Responde con sinceridad y naturalidad.
+    
+    🧠 **Powered by Groq**: Este sistema utiliza inteligencia artificial avanzada para evaluar tus respuestas.
     """,
     "completion_message": "🎉 ¡Entrevista completada! Gracias por tu tiempo.",
     "error_message": "❌ Error al procesar tu respuesta. Por favor, intenta de nuevo.",
+    "groq_required": "🔧 Este sistema requiere configuración de Groq para funcionar correctamente.",
 }
 
 # Configuración de botones

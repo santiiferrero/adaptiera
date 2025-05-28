@@ -2,11 +2,97 @@ from typing import Dict, Any, List
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_groq import ChatGroq
 import os
+import json
 from pathlib import Path
 from dotenv import load_dotenv
+import datetime
 
 from agents.state import ConversationState
-from agents.utils import load_questions_from_file, save_responses_to_file, simulate_email_send_simple
+
+# Importar funciones directamente sin decoradores @tool
+def search_questions_file_direct(file_path: str = "data/questions.json") -> List[str]:
+    """
+    Busca y carga las preguntas desde un archivo local (versión directa sin @tool).
+    """
+    try:
+        # Verificar si el archivo existe
+        if not os.path.exists(file_path):
+            # Si no existe, crear un archivo de ejemplo
+            default_questions = [
+                "¿Cuál es tu nombre completo?",
+                "¿Cuál es tu experiencia laboral previa?",
+                "¿Qué habilidades técnicas posees?",
+                "¿Por qué estás interesado en esta posición?",
+                "¿Cuáles son tus expectativas salariales?"
+            ]
+            
+            # Crear el directorio si no existe
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump({"questions": default_questions}, f, ensure_ascii=False, indent=2)
+            
+            return default_questions
+        
+        # Cargar preguntas del archivo
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            
+        if isinstance(data, dict) and "questions" in data:
+            return data["questions"]
+        elif isinstance(data, list):
+            return data
+        else:
+            raise ValueError("Formato de archivo no válido")
+            
+    except Exception as e:
+        print(f"Error al cargar preguntas: {e}")
+        # Retornar preguntas por defecto en caso de error
+        return [
+            "¿Cuál es tu nombre completo?",
+            "¿Cuál es tu experiencia laboral previa?",
+            "¿Qué habilidades técnicas posees?"
+        ]
+
+def save_user_responses_direct(responses: Dict[str, str], file_path: str = "data/user_responses.json") -> bool:
+    """
+    Guarda las respuestas del usuario en un archivo local (versión directa sin @tool).
+    """
+    try:
+        # Crear el directorio si no existe
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        
+        # Agregar timestamp
+        responses["timestamp"] = datetime.datetime.now().isoformat()
+        
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(responses, f, ensure_ascii=False, indent=2)
+            
+        return True
+        
+    except Exception as e:
+        print(f"Error al guardar respuestas: {e}")
+        return False
+
+def simulate_email_send_direct(user_responses: Dict[str, str]) -> bool:
+    """
+    Simula el envío de correo para pruebas (versión directa sin @tool).
+    """
+    print("=== SIMULACIÓN DE ENVÍO DE CORREO ===")
+    print("Resumen de la entrevista:")
+    print("-" * 40)
+    
+    for question, answer in user_responses.items():
+        if question != "timestamp":
+            print(f"P: {question}")
+            print(f"R: {answer}")
+            print()
+    
+    if "timestamp" in user_responses:
+        print(f"Fecha y hora: {user_responses['timestamp']}")
+    
+    print("=== FIN DE SIMULACIÓN ===")
+    return True
 
 # Cargar variables de entorno desde .env de manera más robusta
 def load_env_variables():
@@ -53,7 +139,7 @@ class SimpleRRHHAgent:
         print("🚀 Inicializando conversación...")
         
         # Cargar preguntas desde archivo
-        questions = load_questions_from_file("data/questions.json")
+        questions = search_questions_file_direct("data/questions.json")
         self.state.pending_questions = questions
         self.state.current_question_index = 0
         
@@ -102,6 +188,7 @@ Empecemos:""")
         if is_satisfactory:
             # Guardar respuesta satisfactoria
             self.state.user_responses[self.state.current_question] = user_input
+            save_user_responses_direct(self.state.user_responses, "data/user_responses.json")
             self.state.needs_clarification = False
             self.state.clarification_reason = None
             print(f"✅ Respuesta aceptada para: {self.state.current_question}")
@@ -125,12 +212,6 @@ Por favor, proporciona más detalles sobre: {self.state.current_question}""")
     def _evaluate_response(self, user_response: str) -> tuple[bool, str]:
         """
         Evalúa si la respuesta del usuario es satisfactoria.
-        
-        Args:
-            user_response: Respuesta del usuario
-            
-        Returns:
-            Tupla (es_satisfactoria, razón_clarificación)
         """
         current_question = self.state.current_question
         
@@ -141,16 +222,15 @@ Por favor, proporciona más detalles sobre: {self.state.current_question}""")
         groq_api_key = os.getenv("GROQ_API_KEY")
         if not groq_api_key:
             print("⚠️ GROQ_API_KEY no configurada, usando lógica simple")
-            print(f"   Variables de entorno disponibles: {list(os.environ.keys())[:5]}...")
             # Lógica simple sin LLM (más permisiva)
-            is_satisfactory = len(user_response.strip()) > 3  # Reducido de 10 a 3 caracteres
+            is_satisfactory = len(user_response.strip()) > 3
             clarification_reason = "Por favor, proporciona una respuesta más detallada." if not is_satisfactory else ""
             return is_satisfactory, clarification_reason
         
         print(f"✅ GROQ_API_KEY encontrada, usando evaluación inteligente")
         
         try:
-            # Usar Groq para evaluar la respuesta (modelo actualizado)
+            # Usar Groq para evaluar la respuesta
             llm = ChatGroq(api_key=groq_api_key, model="llama-3.3-70b-versatile")
             
             evaluation_prompt = f"""
@@ -168,16 +248,33 @@ Por favor, proporciona más detalles sobre: {self.state.current_question}""")
             no tiene sentido o está completamente fuera de tema.
             """
             
-            evaluation = llm.invoke(evaluation_prompt).content.strip()
+            # ✅ SOLUCIÓN DEFINITIVA: Manejo seguro de la respuesta
+            response = llm.invoke(evaluation_prompt)
+            
+            # Extraer contenido de forma segura - ESTO SOLUCIONA EL ERROR
+            if hasattr(response, 'content') and response.content:
+                evaluation = response.content.strip()
+            elif isinstance(response, str):
+                evaluation = response.strip()
+            else:
+                # Convertir a string de forma segura
+                evaluation = str(response).strip()
+            
+            print(f"🔍 Evaluación recibida: {evaluation}")
             
             if evaluation.startswith("SATISFACTORIA"):
                 return True, ""
-            else:
+            elif evaluation.startswith("NECESITA_CLARIFICACION"):
                 reason = evaluation.replace("NECESITA_CLARIFICACION:", "").strip()
                 return False, reason
+            else:
+                # Si la respuesta no tiene el formato esperado, ser permisivo
+                print(f"⚠️ Formato inesperado: {evaluation}")
+                return True, ""
                 
         except Exception as e:
             print(f"Error al evaluar con Groq: {e}")
+            print(f"Tipo de error: {type(e)}")
             # Fallback a lógica simple (más permisiva)
             is_satisfactory = len(user_response.strip()) > 3
             clarification_reason = "Por favor, proporciona una respuesta más detallada." if not is_satisfactory else ""
@@ -221,13 +318,10 @@ Siguiente pregunta:
         self.state.conversation_complete = True
         self.state.current_question = None
         
-        # Guardar respuestas en archivo
-        save_success = save_responses_to_file(self.state.user_responses, "data/user_responses.json")
+        # Enviar correo
+        email_success = simulate_email_send_direct(self.state.user_responses)
         
-        # Enviar correo (simulado por ahora)
-        email_success = simulate_email_send_simple(self.state.user_responses)
-        
-        if save_success and email_success:
+        if email_success:
             final_message = AIMessage(content="""¡Muchas gracias por tu tiempo! 
 
 ✅ Tus respuestas han sido guardadas correctamente

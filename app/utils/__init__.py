@@ -1,1 +1,0 @@
-# Utilidades para la aplicación Adaptiera 
