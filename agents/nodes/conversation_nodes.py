@@ -4,7 +4,8 @@ from langchain_groq import ChatGroq
 import os
 from dotenv import load_dotenv
 from agents.state import ConversationState
-from agents.utils import load_questions_from_file, save_responses_to_file, simulate_email_send_simple
+from agents.tools.file_search_tool import search_questions_file, save_user_responses
+from agents.tools.email_tool import simulate_email_send
 
 # Cargar variables de entorno desde .env
 load_dotenv()
@@ -17,7 +18,7 @@ def initialize_conversation_node(state: ConversationState) -> ConversationState:
     print("🚀 Inicializando conversación...")
     
     # Cargar preguntas desde archivo
-    questions = load_questions_from_file("data/questions.json")
+    questions = search_questions_file("data/questions.json")
     state.pending_questions = questions
     state.current_question_index = 0
     
@@ -102,6 +103,7 @@ def process_user_response_node(state: ConversationState) -> ConversationState:
     if is_satisfactory:
         # Guardar respuesta satisfactoria
         state.user_responses[current_question] = user_response
+        save_user_responses(state.user_responses, "data/user_responses.json")
         state.needs_clarification = False
         state.clarification_reason = None
         print(f"✅ Respuesta aceptada para: {current_question}")
@@ -169,13 +171,10 @@ def finalize_conversation_node(state: ConversationState) -> ConversationState:
     """
     print("🏁 Finalizando conversación...")
     
-    # Guardar respuestas en archivo
-    save_success = save_responses_to_file(state.user_responses, "data/user_responses.json")
-    
     # Enviar correo (simulado por ahora)
-    email_success = simulate_email_send_simple(state.user_responses)
+    email_success = simulate_email_send(state.user_responses)
     
-    if save_success and email_success:
+    if email_success:
         final_message = AIMessage(content="""
 ¡Muchas gracias por tu tiempo! 
 
