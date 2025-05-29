@@ -6,12 +6,10 @@ import ast
 from pathlib import Path
 from cryptography.fernet import Fernet
 
-# Agregar el directorio raíz al path para importar el agente
-root_dir = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(root_dir))
+# Agregar el directorio raíz al path para las importaciones
+sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from agents.agent import crear_agente
-#from agents.agent import crear_agente_langgraph
+# Importar configuraciones
 from core.rrhh_config import (
     INTERFACE_CONFIG, 
     BUTTONS_CONFIG, 
@@ -20,6 +18,8 @@ from core.rrhh_config import (
     DOWNLOAD_CONFIG
 )
 
+# Importar agente directamente (simplificado)
+from agents.simple_agent import create_simple_rrhh_agent
 
 def lanzar_chatbot():
     """
@@ -69,7 +69,9 @@ def lanzar_chatbot():
             datos_usuario = json.loads(json_desencriptado)
             nombre_usuario = datos_usuario.get("nombre", "Candidato")
             telefono_usuario = datos_usuario.get("phone")
-            id_vacancy = datos_usuario.get("vacancy")
+            id_vacancy_raw = datos_usuario.get("vacancy")
+            # Convertir id_vacancy a string si existe
+            id_vacancy = str(id_vacancy_raw) if id_vacancy_raw is not None else None
         except Exception as e:
             st.error(f"Error al procesar el token: {str(e)}")
             nombre_usuario = "Candidato"
@@ -103,8 +105,7 @@ def lanzar_chatbot():
     
     # Inicializar el agente en session state si no existe
     if "rrhh_agent" not in st.session_state:
-        st.session_state.rrhh_agent = crear_agente()
-        #st.session_state.rrhh_agent = crear_agente_langgraph()
+        st.session_state.rrhh_agent = create_simple_rrhh_agent(id_vacancy)
         st.session_state.rrhh_conversation_started = False
         st.session_state.rrhh_messages = []
         # Almacenar información del usuario en session state
@@ -121,8 +122,8 @@ def lanzar_chatbot():
             type=BUTTONS_CONFIG["start"]["type"]
         ):
             # Reiniciar el agente
-            st.session_state.rrhh_agent = crear_agente()
-            #st.session_state.rrhh_agent = crear_agente_langgraph()
+            vacancy_id = st.session_state.get("id_vacancy")
+            st.session_state.rrhh_agent = create_simple_rrhh_agent(vacancy_id)
             st.session_state.rrhh_conversation_started = True
             st.session_state.rrhh_messages = []
             
@@ -139,8 +140,8 @@ def lanzar_chatbot():
             BUTTONS_CONFIG["restart"]["text"], 
             type=BUTTONS_CONFIG["restart"]["type"]
         ):
-            st.session_state.rrhh_agent = crear_agente()
-            #st.session_state.rrhh_agent = crear_agente_langgraph()
+            vacancy_id = st.session_state.get("id_vacancy")
+            st.session_state.rrhh_agent = create_simple_rrhh_agent(vacancy_id)
             st.session_state.rrhh_conversation_started = False
             st.session_state.rrhh_messages = []
             st.rerun()
