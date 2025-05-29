@@ -1,4 +1,10 @@
 import streamlit as st
+import sys
+import os
+
+# Añadir el directorio padre al path para los imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from app.views.chatbot import lanzar_chatbot
 from app.views.form_candidate_contact import mostrar_formulario as mostrar_formulario_candidatos
 
