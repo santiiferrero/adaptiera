@@ -4,7 +4,7 @@ from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
 from langgraph.graph.message import add_messages
 
 from agents.state import ConversationState
-from agents.nodes import (
+from agents.nodes.conversation_nodes import (
     initialize_conversation_node,
     process_user_response_node,
     clarification_node,
