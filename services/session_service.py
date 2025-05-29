@@ -5,7 +5,7 @@ import secrets
 from pathlib import Path
 from typing import Optional
 
-from core.models.session import Session, SessionRequest
+from core.models.api_session import Session, SessionRequest
 
 class SessionService:
     def __init__(self):

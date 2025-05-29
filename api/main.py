@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.controllers.session_controller import router as session_router
+from api.routes.session_route import router as session_router
 
 # Crear instancia de FastAPI
 app = FastAPI(
