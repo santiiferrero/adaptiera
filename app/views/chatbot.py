@@ -26,23 +26,33 @@ def lanzar_chatbot():
     Interfaz de Streamlit para el agente conversacional de RRHH
     """
     
-    # Función para desencriptar texto
+    # Función para desencriptar texto - VERSIÓN ROBUSTA
     def desencriptar_texto(texto_encriptado, clave):
         f = Fernet(clave)
-
-        try:
-            # Intenta evaluar de forma segura (solo literales)
-            b = ast.literal_eval(texto_encriptado)
-            print(f"Texto evaluado: {b}")
-            print(type(b))
-        except Exception:
-            # Si falla, intenta corregir
-            texto_encriptado += "'"
-            b = ast.literal_eval(texto_encriptado)
-            print("Texto inválido, se agregó un apóstrofo.")
-            print(f"Texto corregido: {texto_encriptado}")
         
-        return f.decrypt(b).decode()
+        # Métodos a intentar en orden
+        methods = [
+            # Método 1: ast.literal_eval (para tokens que vienen como "b'...'")
+            lambda token: f.decrypt(ast.literal_eval(token)).decode(),
+            
+            # Método 2: Conversión directa (para tokens Fernet directos)
+            lambda token: f.decrypt(token.encode('utf-8')).decode(),
+            
+            # Método 3: Agregar comilla faltante (código original)
+            lambda token: f.decrypt(ast.literal_eval(token + "'")).decode()
+        ]
+        
+        for i, method in enumerate(methods, 1):
+            try:
+                result = method(texto_encriptado)
+                print(f"✅ Método {i} exitoso")
+                return result
+            except Exception as e:
+                print(f"❌ Método {i} falló: {e}")
+                continue
+        
+        # Si todos los métodos fallan
+        raise ValueError("No se pudo desencriptar el token con ningún método")
 
     # Leer token cifrado en la URL
     query_params = st.query_params
