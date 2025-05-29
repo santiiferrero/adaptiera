@@ -1,5 +1,4 @@
 import streamlit as st
-from app.views.form import mostrar_formulario
 from app.views.chatbot import lanzar_chatbot
 from app.views.form_candidate_contact import mostrar_formulario as mostrar_formulario_candidatos
 

@@ -3,9 +3,74 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langchain_groq import ChatGroq
 import os
 from dotenv import load_dotenv
-from agents.state import ConversationState
-from agents.tools.file_search_tool import search_questions_file, save_user_responses
-from agents.tools.email_tool import simulate_email_send
+from core.models.conversation_models import ConversationState
+
+# Importar funciones directas sin decoradores @tool
+import json
+import datetime
+
+def search_questions_file_direct(file_path: str = "data/questions.json") -> list[str]:
+    """Busca y carga las preguntas desde un archivo local (versión directa sin @tool)."""
+    try:
+        if not os.path.exists(file_path):
+            default_questions = [
+                "¿Cuál es tu nombre completo?",
+                "¿Cuál es tu experiencia laboral previa?",
+                "¿Qué habilidades técnicas posees?",
+                "¿Por qué estás interesado en esta posición?",
+                "¿Cuáles son tus expectativas salariales?"
+            ]
+            
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump({"questions": default_questions}, f, ensure_ascii=False, indent=2)
+            
+            return default_questions
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            
+        if isinstance(data, dict) and "questions" in data:
+            return data["questions"]
+        elif isinstance(data, list):
+            return data
+        else:
+            raise ValueError("Formato de archivo no válido")
+            
+    except Exception as e:
+        print(f"Error al cargar preguntas: {e}")
+        return [
+            "¿Cuál es tu nombre completo?",
+            "¿Cuál es tu experiencia laboral previa?",
+            "¿Qué habilidades técnicas posees?"
+        ]
+
+def save_user_responses_direct(responses: Dict[str, str], file_path: str = "data/user_responses.json") -> bool:
+    """Guarda las respuestas del usuario en un archivo local (versión directa sin @tool)."""
+    try:
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        
+        responses["timestamp"] = datetime.datetime.now().isoformat()
+        
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(responses, f, ensure_ascii=False, indent=2)
+            
+        return True
+        
+    except Exception as e:
+        print(f"Error al guardar respuestas: {e}")
+        return False
+
+def simulate_email_send_direct(user_responses: Dict[str, str]) -> bool:
+    """Simula el envío de correo (versión directa sin @tool)."""
+    try:
+        print("📧 Simulando envío de correo...")
+        print(f"Resumen enviado para {len(user_responses)} respuestas")
+        return True
+    except Exception as e:
+        print(f"Error al enviar correo: {e}")
+        return False
 
 # Cargar variables de entorno desde .env
 load_dotenv()
@@ -18,26 +83,22 @@ def initialize_conversation_node(state: ConversationState) -> ConversationState:
     print("🚀 Inicializando conversación...")
     
     # Cargar preguntas desde archivo
-    questions = search_questions_file("data/questions.json")
+    questions = search_questions_file_direct("data/questions.json")
     state.pending_questions = questions
     state.current_question_index = 0
     
     if questions:
         state.current_question = questions[0]
         
-        # Mensaje de bienvenida
-        welcome_message = AIMessage(content="""
-¡Hola! Soy el asistente de RRHH de Adaptiera. 
+        # Mensaje de bienvenida combinado con la primera pregunta
+        welcome_and_question_message = AIMessage(content=f"""¡Hola! Soy el asistente de RRHH de Adaptiera. 
 Voy a realizarte algunas preguntas para conocerte mejor.
 Responde con la mayor sinceridad posible.
 
 Empecemos:
-""")
-        state.messages.append(welcome_message)
-        
-        # Primera pregunta
-        question_message = AIMessage(content=state.current_question)
-        state.messages.append(question_message)
+
+{state.current_question}""")
+        state.messages.append(welcome_and_question_message)
     
     return state
 
@@ -103,7 +164,7 @@ def process_user_response_node(state: ConversationState) -> ConversationState:
     if is_satisfactory:
         # Guardar respuesta satisfactoria
         state.user_responses[current_question] = user_response
-        save_user_responses(state.user_responses, "data/user_responses.json")
+        save_user_responses_direct(state.user_responses, "data/user_responses.json")
         state.needs_clarification = False
         state.clarification_reason = None
         print(f"✅ Respuesta aceptada para: {current_question}")
@@ -172,7 +233,7 @@ def finalize_conversation_node(state: ConversationState) -> ConversationState:
     print("🏁 Finalizando conversación...")
     
     # Enviar correo (simulado por ahora)
-    email_success = simulate_email_send(state.user_responses)
+    email_success = simulate_email_send_direct(state.user_responses)
     
     if email_success:
         final_message = AIMessage(content="""
@@ -202,6 +263,10 @@ def decision_node(state: ConversationState) -> str:
     Esta función NO modifica el estado, solo retorna la decisión.
     """
     print("🎯 Tomando decisión sobre el siguiente paso...")
+    print(f"   Estado actual: conversation_complete={state.conversation_complete}, needs_clarification={state.needs_clarification}")
+    print(f"   Pregunta actual: {state.current_question}")
+    print(f"   Índice: {state.current_question_index}, Total preguntas: {len(state.pending_questions)}")
+    print(f"   Último mensaje: {type(state.messages[-1]).__name__ if state.messages else 'Ninguno'}")
     
     # Si la conversación está completa, ir al nodo final
     if state.conversation_complete:
@@ -218,10 +283,28 @@ def decision_node(state: ConversationState) -> str:
         print("   → Procesando respuesta del usuario...")
         return "process_response"
     
-    # Si no hay pregunta actual, ir a la siguiente
-    if not state.current_question:
-        print("   → Avanzando a siguiente pregunta...")
+    # Si acabamos de procesar una respuesta satisfactoria, avanzar a la siguiente pregunta
+    # Esto se detecta cuando: no necesita aclaración Y tenemos una pregunta actual Y hay respuestas guardadas
+    if (not state.needs_clarification and 
+        state.current_question and 
+        state.current_question in state.user_responses and
+        state.messages and 
+        isinstance(state.messages[-1], AIMessage)):
+        print("   → Respuesta procesada exitosamente, avanzando a siguiente pregunta...")
         return "next_question"
+    
+    # Si no hay pregunta actual pero no está completa, ir a la siguiente
+    if not state.current_question and not state.conversation_complete:
+        print("   → No hay pregunta actual, avanzando a siguiente pregunta...")
+        return "next_question"
+    
+    # Si tenemos una pregunta actual pero es la inicial (sin respuestas del usuario aún)
+    if (state.current_question and 
+        len(state.user_responses) == 0 and 
+        state.messages and 
+        isinstance(state.messages[-1], AIMessage)):
+        print("   → Estado inicial con pregunta lista, esperando respuesta del usuario...")
+        return "wait_for_user"
     
     # Por defecto, esperar respuesta del usuario
     print("   → Esperando respuesta del usuario...")
