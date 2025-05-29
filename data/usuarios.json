@@ -1,0 +1,16 @@
+{
+    "usuarios": [
+        {
+            "user": "juan.perez",
+            "nombre": "Juan Pérez"
+        },
+        {
+            "user": "maria.garcia",
+            "nombre": "María García"
+        },
+        {
+            "user": "carlos.lopez",
+            "nombre": "Carlos López"
+        }
+    ]
+} 

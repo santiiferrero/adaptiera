@@ -17,3 +17,6 @@ langchain-core
 langchain
 python-dotenv
 langgraph
+
+uvicorn[standard]
+fastapi
