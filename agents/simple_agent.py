@@ -8,9 +8,132 @@ from dotenv import load_dotenv
 import datetime
 
 from core.models.conversation_models import ConversationState
+<<<<<<< HEAD
 from agents.tools.file_search_tool import search_questions_file_direct, save_user_responses_direct
 from agents.tools.email_tool import simulate_email_send_direct
 from utils.env_utils import load_env_variables
+=======
+
+# Importar funciones directamente sin decoradores @tool
+def search_questions_file_direct(file_path: str = "data/questions.json", id_vacancy: str = None) -> List[str]:
+    """
+    Busca y carga las preguntas desde un archivo local basándose en el id_vacancy.
+    
+    Args:
+        file_path: Ruta base del archivo de preguntas
+        id_vacancy: ID de la vacante para seleccionar el archivo específico
+    """
+    try:
+        # Si se proporciona id_vacancy, buscar archivo específico
+        if id_vacancy:
+            # Construir ruta específica para la vacante
+            base_dir = os.path.dirname(file_path) if file_path else "data"
+            specific_file = os.path.join(base_dir, f"questions_{id_vacancy}.json")
+            
+            print(f"🔍 Buscando preguntas para vacante: {id_vacancy}")
+            print(f"📁 Archivo esperado: {specific_file}")
+            
+            # Intentar cargar archivo específico de la vacante
+            if os.path.exists(specific_file):
+                print(f"✅ Encontrado archivo específico: {specific_file}")
+                with open(specific_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    
+                if isinstance(data, dict) and "questions" in data:
+                    print(f"📋 Cargadas {len(data['questions'])} preguntas para vacante {id_vacancy}")
+                    return data["questions"]
+                elif isinstance(data, list):
+                    print(f"📋 Cargadas {len(data)} preguntas para vacante {id_vacancy}")
+                    return data
+            else:
+                print(f"⚠️ No se encontró archivo específico para vacante {id_vacancy}")
+                print(f"🔄 Intentando cargar archivo por defecto...")
+        
+        # Cargar archivo por defecto si no hay id_vacancy o no existe el específico
+        default_file = file_path if file_path else "data/questions.json"
+        
+        # Verificar si el archivo por defecto existe
+        if not os.path.exists(default_file):
+            print(f"❌ No se encontró archivo de preguntas: {default_file}")
+            raise FileNotFoundError(f"Archivo de preguntas no encontrado: {default_file}")
+        
+        # Cargar preguntas del archivo por defecto
+        print(f"📂 Cargando archivo por defecto: {default_file}")
+        with open(default_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            
+        if isinstance(data, dict) and "questions" in data:
+            print(f"📋 Cargadas {len(data['questions'])} preguntas del archivo por defecto")
+            return data["questions"]
+        elif isinstance(data, list):
+            print(f"📋 Cargadas {len(data)} preguntas del archivo por defecto")
+            return data
+        else:
+            raise ValueError("Formato de archivo no válido")
+            
+    except Exception as e:
+        print(f"❌ Error al cargar preguntas: {e}")
+        raise e
+
+def save_user_responses_direct(responses: Dict[str, str], file_path: str = "data/user_responses.json") -> bool:
+    """
+    Guarda las respuestas del usuario en un archivo local (versión directa sin @tool).
+    """
+    try:
+        # Crear el directorio si no existe
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        
+        # Agregar timestamp
+        responses["timestamp"] = datetime.datetime.now().isoformat()
+        
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(responses, f, ensure_ascii=False, indent=2)
+            
+        return True
+        
+    except Exception as e:
+        print(f"Error al guardar respuestas: {e}")
+        return False
+
+def simulate_email_send_direct(user_responses: Dict[str, str]) -> bool:
+    """
+    Simula el envío de correo para pruebas (versión directa sin @tool).
+    """
+    print("=== SIMULACIÓN DE ENVÍO DE CORREO ===")
+    print("Resumen de la entrevista:")
+    print("-" * 40)
+    
+    for question, answer in user_responses.items():
+        if question != "timestamp":
+            print(f"P: {question}")
+            print(f"R: {answer}")
+            print()
+    
+    if "timestamp" in user_responses:
+        print(f"Fecha y hora: {user_responses['timestamp']}")
+    
+    print("=== FIN DE SIMULACIÓN ===")
+    return True
+
+# Cargar variables de entorno desde .env de manera más robusta
+def load_env_variables():
+    """Carga variables de entorno desde diferentes ubicaciones posibles"""
+    current_dir = Path.cwd()
+    possible_env_files = [
+        current_dir / ".env",
+        current_dir.parent / ".env",
+        Path(__file__).parent / ".env",
+        Path(__file__).parent.parent / ".env"
+    ]
+    
+    for env_file in possible_env_files:
+        if env_file.exists():
+            load_dotenv(env_file, override=True)
+            return
+    
+    # Fallback: cargar desde ubicación por defecto
+    load_dotenv(override=True)
+>>>>>>> 89555764e321d68bb834290eb9d0decbd30f198e
 
 # Cargar variables de entorno al importar el módulo
 load_env_variables()

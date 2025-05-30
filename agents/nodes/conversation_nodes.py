@@ -2,10 +2,82 @@ from typing import Dict, Any
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_groq import ChatGroq
 import os
+<<<<<<< HEAD
 from core.models.conversation_models import ConversationState
 from agents.tools.file_search_tool import search_questions_file_direct, save_user_responses_direct
 from agents.tools.email_tool import simulate_email_send_direct
 from utils.env_utils import load_env_variables
+=======
+from dotenv import load_dotenv
+from core.models.conversation_models import ConversationState
+
+# Importar funciones directas sin decoradores @tool
+import json
+import datetime
+
+def search_questions_file_direct(file_path: str = "data/questions.json") -> list[str]:
+    """Busca y carga las preguntas desde un archivo local (versión directa sin @tool)."""
+    try:
+        if not os.path.exists(file_path):
+            default_questions = [
+                "¿Cuál es tu nombre completo?",
+                "¿Cuál es tu experiencia laboral previa?",
+                "¿Qué habilidades técnicas posees?",
+                "¿Por qué estás interesado en esta posición?",
+                "¿Cuáles son tus expectativas salariales?"
+            ]
+            
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump({"questions": default_questions}, f, ensure_ascii=False, indent=2)
+            
+            return default_questions
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            
+        if isinstance(data, dict) and "questions" in data:
+            return data["questions"]
+        elif isinstance(data, list):
+            return data
+        else:
+            raise ValueError("Formato de archivo no válido")
+            
+    except Exception as e:
+        print(f"Error al cargar preguntas: {e}")
+        return [
+            "¿Cuál es tu nombre completo?",
+            "¿Cuál es tu experiencia laboral previa?",
+            "¿Qué habilidades técnicas posees?"
+        ]
+
+def save_user_responses_direct(responses: Dict[str, str], file_path: str = "data/user_responses.json") -> bool:
+    """Guarda las respuestas del usuario en un archivo local (versión directa sin @tool)."""
+    try:
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        
+        responses["timestamp"] = datetime.datetime.now().isoformat()
+        
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(responses, f, ensure_ascii=False, indent=2)
+            
+        return True
+        
+    except Exception as e:
+        print(f"Error al guardar respuestas: {e}")
+        return False
+
+def simulate_email_send_direct(user_responses: Dict[str, str]) -> bool:
+    """Simula el envío de correo (versión directa sin @tool)."""
+    try:
+        print("📧 Simulando envío de correo...")
+        print(f"Resumen enviado para {len(user_responses)} respuestas")
+        return True
+    except Exception as e:
+        print(f"Error al enviar correo: {e}")
+        return False
+>>>>>>> 89555764e321d68bb834290eb9d0decbd30f198e
 
 # Cargar variables de entorno
 load_env_variables()
@@ -201,6 +273,10 @@ def decision_node(state: ConversationState) -> str:
     print(f"   Estado actual: conversation_complete={state.conversation_complete}, needs_clarification={state.needs_clarification}")
     print(f"   Pregunta actual: {state.current_question}")
     print(f"   Índice: {state.current_question_index}, Total preguntas: {len(state.pending_questions)}")
+<<<<<<< HEAD
+=======
+    print(f"   Último mensaje: {type(state.messages[-1]).__name__ if state.messages else 'Ninguno'}")
+>>>>>>> 89555764e321d68bb834290eb9d0decbd30f198e
     
     # 1. Si ya está completa, finalizar
     if state.conversation_complete:
@@ -224,6 +300,7 @@ def decision_node(state: ConversationState) -> str:
         print("   ➡️ Decisión: process_response")
         return "process_response"
     
+<<<<<<< HEAD
     # 5. Si acabamos de procesar una respuesta satisfactoria, ir a siguiente pregunta
     if (state.current_question_index < len(state.pending_questions) and 
         not state.needs_clarification):
@@ -233,3 +310,39 @@ def decision_node(state: ConversationState) -> str:
     # 6. Por defecto, esperar respuesta del usuario
     print("   ➡️ Decisión: wait_for_user")
     return "wait_for_user"
+=======
+    # Si acabamos de procesar una respuesta satisfactoria, avanzar a la siguiente pregunta
+    # Esto se detecta cuando: no necesita aclaración Y tenemos una pregunta actual Y hay respuestas guardadas
+    if (not state.needs_clarification and 
+        state.current_question and 
+        state.current_question in state.user_responses and
+        state.messages and 
+        isinstance(state.messages[-1], AIMessage)):
+        print("   → Respuesta procesada exitosamente, avanzando a siguiente pregunta...")
+        return "next_question"
+    
+    # Si no hay pregunta actual pero no está completa, ir a la siguiente
+    if not state.current_question and not state.conversation_complete:
+        print("   → No hay pregunta actual, avanzando a siguiente pregunta...")
+        return "next_question"
+    
+    # Si tenemos una pregunta actual pero es la inicial (sin respuestas del usuario aún)
+    if (state.current_question and 
+        len(state.user_responses) == 0 and 
+        state.messages and 
+        isinstance(state.messages[-1], AIMessage)):
+        print("   → Estado inicial con pregunta lista, esperando respuesta del usuario...")
+        return "wait_for_user"
+    
+    # Por defecto, esperar respuesta del usuario
+    print("   → Esperando respuesta del usuario...")
+    return "wait_for_user"
+
+
+def dummy_decision_node(state: ConversationState) -> ConversationState:
+    """
+    Nodo dummy que no hace nada, solo para mantener la estructura del grafo.
+    La lógica real está en la función decision_node que se usa para routing.
+    """
+    return state 
+>>>>>>> 89555764e321d68bb834290eb9d0decbd30f198e

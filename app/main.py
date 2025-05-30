@@ -3,7 +3,7 @@ import sys
 import os
 # Añadir el directorio actual al path para los imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from views.chatbot import lanzar_chatbot
+from views.interviewer_chatbot_st import lanzar_chatbot
 from views.form_candidate_contact import mostrar_formulario as mostrar_formulario_candidatos
 
 # Configuración de la página

@@ -252,7 +252,6 @@ def lanzar_chatbot():
             st.markdown(HELP_CONFIG["tips"])
 
 
-
 if __name__ == "__main__":
     # Configuración de la página para deployment independiente
     st.set_page_config(

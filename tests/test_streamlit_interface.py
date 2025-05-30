@@ -13,7 +13,7 @@ root_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(root_dir))
 
 # Importar componentes a probar
-from app.views.chatbot import lanzar_chatbot
+from app.views.interviewer_chatbot_st import lanzar_chatbot
 from agents.simple_agent import create_simple_rrhh_agent
 
 def test_imports():
