@@ -2,9 +2,7 @@ import streamlit as st
 import sys
 import os
 import json
-import ast
 from pathlib import Path
-from cryptography.fernet import Fernet
 
 # Agregar el directorio raíz al path para las importaciones
 sys.path.append(str(Path(__file__).parent.parent.parent))
@@ -18,6 +16,9 @@ from core.rrhh_config import (
     DOWNLOAD_CONFIG
 )
 
+# Importar funciones de seguridad
+from core.security import desencriptar_datos_usuario
+
 # Importar agente directamente (simplificado)
 from agents.simple_agent import create_simple_rrhh_agent
 
@@ -26,47 +27,16 @@ def lanzar_chatbot():
     Interfaz de Streamlit para el agente conversacional de RRHH
     """
     
-    # Función para desencriptar texto - VERSIÓN ROBUSTA
-    def desencriptar_texto(texto_encriptado, clave):
-        f = Fernet(clave)
-        
-        # Métodos a intentar en orden
-        methods = [
-            # Método 1: ast.literal_eval (para tokens que vienen como "b'...'")
-            lambda token: f.decrypt(ast.literal_eval(token)).decode(),
-            
-            # Método 2: Conversión directa (para tokens Fernet directos)
-            lambda token: f.decrypt(token.encode('utf-8')).decode(),
-            
-            # Método 3: Agregar comilla faltante (código original)
-            lambda token: f.decrypt(ast.literal_eval(token + "'")).decode()
-        ]
-        
-        for i, method in enumerate(methods, 1):
-            try:
-                result = method(texto_encriptado)
-                print(f"✅ Método {i} exitoso")
-                return result
-            except Exception as e:
-                print(f"❌ Método {i} falló: {e}")
-                continue
-        
-        # Si todos los métodos fallan
-        raise ValueError("No se pudo desencriptar el token con ningún método")
-
     # Leer token cifrado en la URL
     query_params = st.query_params
     token = query_params.get("token", None)
 
     if token:
         try:
-            # La clave debe estar almacenada de forma segura, aquí la obtenemos de una variable de entorno
-            clave = os.getenv("FERNET_KEY").encode()
-            # Desencriptar el JSON
-            json_desencriptado = desencriptar_texto(token, clave)
-            print(f"Token desencriptado: {json_desencriptado}")
-            # Convertir el JSON a diccionario
-            datos_usuario = json.loads(json_desencriptado)
+            # Desencriptar directamente a diccionario usando la función modularizada
+            datos_usuario = desencriptar_datos_usuario(token)
+            print(f"Datos usuario desencriptados: {datos_usuario}")
+            
             nombre_usuario = datos_usuario.get("nombre", "Candidato")
             telefono_usuario = datos_usuario.get("phone")
             id_vacancy_raw = datos_usuario.get("vacancy")
