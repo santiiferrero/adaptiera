@@ -25,21 +25,21 @@ class SimpleRRHHAgent:
     Puede cargar preguntas específicas según el ID de vacante.
     """
     
-    def __init__(self, id_vacancy: str = None):
+    def __init__(self, id_job_offer: str = None):
         """
         Inicializa el agente de RRHH.
         
         Args:
-            id_vacancy: ID de la vacante para cargar preguntas específicas
+            id_job_offer: ID de la oferta de trabajo para cargar preguntas específicas
         """
         self.state = ConversationState()
         self.initialized = False
-        self.id_vacancy = id_vacancy
+        self.id_job_offer = id_job_offer
         
         # Guardar información de la vacante en metadatos
-        if id_vacancy:
-            self.state.metadata["id_vacancy"] = id_vacancy
-            print(f"🎯 Agente inicializado para vacante: {id_vacancy}")
+        if id_job_offer:
+            self.state.metadata["id_job_offer"] = id_job_offer
+            print(f"🎯 Agente inicializado para oferta de trabajo: {id_job_offer}")
         else:
             print("🎯 Agente inicializado con preguntas generales")
     
@@ -53,7 +53,7 @@ class SimpleRRHHAgent:
         print("🚀 Inicializando conversación...")
         
         # Cargar preguntas desde archivo específico o por defecto
-        questions = search_questions_file_direct("data/questions.json", self.id_vacancy)
+        questions = search_questions_file_direct("data/questions.json", self.id_job_offer)
         self.state.pending_questions = questions
         self.state.current_question_index = 0
         
@@ -65,8 +65,8 @@ class SimpleRRHHAgent:
 Voy a realizarte algunas preguntas para conocerte mejor.
 Responde con la mayor sinceridad posible."""
             
-            if self.id_vacancy:
-                welcome_content += f"\n\nEsta entrevista es para la vacante: **{self.id_vacancy}**"
+            if self.id_job_offer:
+                welcome_content += f"\n\nEsta entrevista es para la oferta de trabajo: **{self.id_job_offer}**"
             
             welcome_content += "\n\nEmpecemos:"
             
@@ -108,9 +108,9 @@ Responde con la mayor sinceridad posible."""
             # Guardar respuesta satisfactoria
             self.state.user_responses[self.state.current_question] = user_input
             
-            # Crear nombre de archivo basado en id_vacancy
-            if self.id_vacancy:
-                response_file = f"data/user_responses_{self.id_vacancy}.json"
+            # Crear nombre de archivo basado en id_job_offer
+            if self.id_job_offer:
+                response_file = f"data/user_responses_{self.id_job_offer}.json"
             else:
                 response_file = "data/user_responses.json"
             
@@ -295,14 +295,14 @@ pero nuestro equipo se pondrá en contacto contigo pronto.""")
 
 
 # Función de conveniencia para crear una instancia del agente
-def create_simple_rrhh_agent(id_vacancy: str = None) -> SimpleRRHHAgent:
+def create_simple_rrhh_agent(id_job_offer: str = None) -> SimpleRRHHAgent:
     """
     Crea una nueva instancia del agente de RRHH simplificado.
     
     Args:
-        id_vacancy: ID de la vacante para cargar preguntas específicas
+        id_job_offer: ID de la oferta de trabajo para cargar preguntas específicas
     
     Returns:
         Instancia del agente configurada
     """
-    return SimpleRRHHAgent(id_vacancy) 
+    return SimpleRRHHAgent(id_job_offer) 

@@ -39,20 +39,20 @@ def lanzar_chatbot():
             
             nombre_usuario = datos_usuario.get("nombre", "Candidato")
             telefono_usuario = datos_usuario.get("phone")
-            id_vacancy_raw = datos_usuario.get("vacancy")
-            # Convertir id_vacancy a string si existe
-            id_vacancy = str(id_vacancy_raw) if id_vacancy_raw is not None else None
+            id_job_offer_raw = datos_usuario.get("job-offer")
+            # Convertir id_job_offer a string si existe
+            id_job_offer = str(id_job_offer_raw) if id_job_offer_raw is not None else None
         except Exception as e:
             st.error(f"Error al procesar el token: {str(e)}")
             nombre_usuario = "Candidato"
             telefono_usuario = None
-            id_vacancy = None
+            id_job_offer = None
     else:
         # Leer parámetros GET desde la URL
         query_params = st.query_params
         nombre_usuario = query_params.get("nombre", "Candidato")
         telefono_usuario = query_params.get("phone")
-        id_vacancy = query_params.get("vacancy")
+        id_job_offer = query_params.get("job-offer")
     
     # Título y descripción usando configuración
     st.subheader(INTERFACE_CONFIG["title"])
@@ -65,23 +65,23 @@ def lanzar_chatbot():
         st.markdown(INTERFACE_CONFIG["welcome_message"])
     
     # Mostrar información del usuario si está disponible
-    if nombre_usuario != "Candidato" or telefono_usuario or id_vacancy:
+    if nombre_usuario != "Candidato" or telefono_usuario or id_job_offer:
         with st.expander("👤 Información del candidato"):
             st.write(f"**Nombre:** {nombre_usuario}")
             if telefono_usuario:
                 st.write(f"**Teléfono:** {telefono_usuario}")
-            if id_vacancy:
-                st.write(f"**ID Vacante:** {id_vacancy}")
+            if id_job_offer:
+                st.write(f"**ID Oferta de Trabajo:** {id_job_offer}")
     
     # Inicializar el agente en session state si no existe
     if "rrhh_agent" not in st.session_state:
-        st.session_state.rrhh_agent = create_simple_rrhh_agent(id_vacancy)
+        st.session_state.rrhh_agent = create_simple_rrhh_agent(id_job_offer)
         st.session_state.rrhh_conversation_started = False
         st.session_state.rrhh_messages = []
         # Almacenar información del usuario en session state
         st.session_state.nombre_usuario = nombre_usuario
         st.session_state.telefono_usuario = telefono_usuario
-        st.session_state.id_vacancy = id_vacancy
+        st.session_state.id_job_offer = id_job_offer
     
     # Botón para iniciar/reiniciar la conversación
     col1, col2, col3 = st.columns([1, 1, 1])
@@ -92,8 +92,8 @@ def lanzar_chatbot():
             type=BUTTONS_CONFIG["start"]["type"]
         ):
             # Reiniciar el agente
-            vacancy_id = st.session_state.get("id_vacancy")
-            st.session_state.rrhh_agent = create_simple_rrhh_agent(vacancy_id)
+            job_offer_id = st.session_state.get("id_job_offer")
+            st.session_state.rrhh_agent = create_simple_rrhh_agent(job_offer_id)
             st.session_state.rrhh_conversation_started = True
             st.session_state.rrhh_messages = []
             
@@ -110,8 +110,8 @@ def lanzar_chatbot():
             BUTTONS_CONFIG["restart"]["text"], 
             type=BUTTONS_CONFIG["restart"]["type"]
         ):
-            vacancy_id = st.session_state.get("id_vacancy")
-            st.session_state.rrhh_agent = create_simple_rrhh_agent(vacancy_id)
+            job_offer_id = st.session_state.get("id_job_offer")
+            st.session_state.rrhh_agent = create_simple_rrhh_agent(job_offer_id)
             st.session_state.rrhh_conversation_started = False
             st.session_state.rrhh_messages = []
             st.rerun()
