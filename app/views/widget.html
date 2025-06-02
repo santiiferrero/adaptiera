@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Adaptiera Chat Widget</title>
+    <style>
+        /* Mismo estilo que tu Streamlit */
+        body { font-family: Arial, sans-serif; }
+        .chat-container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .message { margin: 10px 0; padding: 10px; border-radius: 8px; }
+        .user { background: #e3f2fd; text-align: right; }
+        .agent { background: #f1f8e9; }
+        /* ... más estilos ... */
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div id="messages"></div>
+        <div>
+            <textarea id="user-input" placeholder="Escribe tu respuesta..."></textarea>
+            <button onclick="sendMessage()">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        // Obtener parámetros de URL (igual que tu Streamlit)
+        const urlParams = new URLSearchParams(window.location.search);
+        const jobOffer = urlParams.get('job-offer');
+        const token = urlParams.get('token');
+        
+        // Conectar WebSocket
+        const ws = new WebSocket('ws://localhost:8000/chat/new_session');
+        
+        ws.onopen = function() {
+            if (jobOffer) {
+                ws.send(JSON.stringify({
+                    type: 'init_session',
+                    job_offer: jobOffer
+                }));
+            }
+        };
+        
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.type === 'agent_message') {
+                addMessage('agent', data.content);
+            }
+        };
+        
+        function sendMessage() {
+            const input = document.getElementById('user-input');
+            const message = input.value.trim();
+            if (message) {
+                addMessage('user', message);
+                ws.send(JSON.stringify({
+                    type: 'user_message',
+                    content: message
+                }));
+                input.value = '';
+            }
+        }
+        
+        function addMessage(role, content) {
+            const messages = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.className = `message ${role}`;
+            div.innerHTML = `<strong>${role === 'user' ? '👤 Tú' : '🤖 Agente'}:</strong> ${content}`;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+    </script>
+</body>
+</html>
