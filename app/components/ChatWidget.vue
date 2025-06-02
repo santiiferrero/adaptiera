@@ -48,7 +48,11 @@ export default {
     },
     websocketUrl: {
       type: String,
-      default: 'ws://localhost:8000/chat/new_session'
+      default() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host;
+        return `${protocol}//${host}/chat/new_session`;
+      }
     }
   },
   data() {

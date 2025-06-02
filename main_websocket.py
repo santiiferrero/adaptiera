@@ -1,5 +1,6 @@
 # main_websocket.py
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse
 from agents.simple_agent import create_simple_rrhh_agent
 import json
 import uuid
@@ -79,25 +80,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
 # Endpoint para servir el widget HTML
 @app.get("/widget")
 async def serve_widget():
-    return """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Adaptiera Chat</title>
-        <!-- Tu CSS aquí -->
-    </head>
-    <body>
-        <div id="chat-container">
-            <div id="messages"></div>
-            <div id="input-container">
-                <textarea id="user-input" placeholder="Escribe tu respuesta..."></textarea>
-                <button id="send-btn">Enviar</button>
-            </div>
-        </div>
-        <!-- Tu JavaScript aquí -->
-    </body>
-    </html>
-    """
+    return FileResponse("app/views/widget.html")
 
 if __name__ == "__main__":
     # Railway proporciona el puerto automáticamente
